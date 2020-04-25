@@ -1,29 +1,39 @@
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
 body {
-	margin:0 0 0 0; /*squish slide into mturk window*/
+        margin:0 0 0 0; /*squish slide into mturk window*/
+        padding:0;
+        font-family: 'Crimson Text', serif;
+        height: 100vh;
 }
 
 table {
-	/* center all tables by default */
-	margin: auto;
+        /* center all tables by default */
+        margin: auto;
 }
 
 /*the experiment happens in "slides"*/
 .slide {
-	/*pad the inside of the slide*/
-	padding-top: 10px;
-	padding-left: 20px;
-	padding-right: 20px;
+        /* pad the inside of the slide*/
+        padding-top: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
 
     /*center slide within the window*/
-	margin: auto auto;
-	margin-top: 0px;
+        margin: auto auto;
+        margin-top: 0px;
 
-	/*all elements in a slide will be centered by default*/
+        /*all elements in a slide will be centered by default*/
     text-align: center;
 
-    border: 1px solid #04abe3;
+    border-left: 1px solid #8C1515;
+    border-right: 1px solid #8C1515;
     width: 800px;
-    height: 600px;
+    height: 100%;
 
     /*could explicitly set the following, but these are the defaults for me (chrome, linux)*/
     font-size: 20px;
@@ -33,29 +43,29 @@ table {
 /* start slide */
 
 #cocolab {
-	font-weight: bold;
+        font-weight: bold;
 }
 
 #legal {
-	font-size: 0.8em;
+        font-size: 0.8em;
 }
 
 /*make the subj_info slide prettier*/
 
 .subj_info_title {
-	color:#036;
-	background:transparent;
-	font-size:25;
-	font-weight:bold;
+        color:#036;
+        background:transparent;
+        font-size:25;
+        font-weight:bold;
 }
 
 div.long_form {
-	font-size: 15px;
+        font-size: 15px;
 }
 
 fieldset {
-	border: none;
-	border-top: solid 1px #ccc;
+        border: none;
+        border-top: solid 1px #ccc;
 }
 
 div.long_form p {
@@ -70,11 +80,11 @@ div.long_form p.info {
 }
 
 div.long_form label {
-	padding: .5em .5em;
+        padding: .5em .5em;
 }
 
 textarea {
-	border: 2px inset;
+        border: 2px inset;
 }
 
 /* sliders */
@@ -82,38 +92,38 @@ textarea {
 
 /*align the left and right labels for the sliders properly*/
 .slider_table .left {
-	display: inline;
-	text-align: left;
-	float: left;
+        display: inline;
+        text-align: left;
+        float: left;
 }
 
 .slider_table .right {
-	display: inline;
-	text-align: right;
-	float: right;
+        display: inline;
+        text-align: right;
+        float: right;
 }
 
 .thin {
-	height: 50px;
+        height: 50px;
 }
 
 .top {
-	top: 0%;
-	position: relative;
+        top: 0%;
+        position: relative;
 }
 .bottom {
-	top: 100%;
-	position: relative;
-	transform: translateY(-200%);
+        top: 100%;
+        position: relative;
+        transform: translateY(-200%);
 }
 
 .slider_target {
-	text-align: right;
+        text-align: right;
 }
 
 .ui-slider-range {
-	/* you could have a "range" which makes the slider to the left of the handle a different color from the background */
-	background: transparent;
+        /* you could have a "range" which makes the slider to the left of the handle a different color from the background */
+        background: transparent;
 }
 
 #cocologo {
@@ -122,29 +132,29 @@ textarea {
 }
 
 .slider {
-	width: 400;
-	margin: 10px;
+        width: 400;
+        margin: 10px;
 }
 
 .vertical_slider {
-	width: 10px;
-	height: 300px;
-	margin: 10px auto;
+        width: 10px;
+        height: 300px;
+        margin: 10px auto;
 }
 
 #slider_endpoint_labels {
-	height: 300px;
+        height: 300px;
 }
 
 .bin_label{
-	text-align: center;
+        text-align: center;
 }
 
 /* Progress Bar */
 .progress{
   position: absolute;
-  right: 10px;
-  top: 10px;
+  left: 0px;
+  bottom: 0px;
 }
 .progress span{
   position:relative;
@@ -152,15 +162,18 @@ textarea {
 }
 
 .bar-wrapper{
-    height:20px;
-    width:200px;
-    border:1px solid #000000;
+    height:1.25em;
+    width:100vw;
+    /* border:1px solid #8C1515; */
     display:inline-block;
 }
 
 .bar{
+    font-family: 'Source Sans Pro';
+    font-size: small;
+    color: #ffffff;
     position:relative;
     height:100%;
     width:0px;
-    background-color:#000000
+    background-color:#8C1515
 }
