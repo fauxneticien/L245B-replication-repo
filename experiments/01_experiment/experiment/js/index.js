@@ -82,7 +82,8 @@ function make_slides(f) {
       this.stim = stim; // store this information in the slide so you can record it later
       $("audio#" + stim.stimulus)[0].play();
 
-      $("#test_form > input").prop('checked', false)
+      $("#test_form > input").prop('checked', false);
+      $(".response").hide();
     },
 
     button : function() {
@@ -145,9 +146,9 @@ function make_slides(f) {
   return slides;
 }
 
-function preload_audio(stimulus) {
+function preload_audio(stimulus, condition) {
   $("#audio_data").append($("<audio>", {
-    class: "stimulus",
+    class: "stimulus" + (condition != undefined ? " test" : ""),
     id: stimulus,
     src: "audio/" + stimulus + ".wav.mp3",
     loop: false,
@@ -166,11 +167,12 @@ function init() {
   exp.stims = replexp_initialize(1,1);
 
   // flatten into 1-d list, then pre-load audio
-  _.map(_.flatten(exp.stims), s => preload_audio(s.stimulus));
+  _.map(_.flatten(exp.stims), s => preload_audio(s.stimulus, s.condition));
   // enable continue only after stimulus audio has played
   $("audio.stimulus").on('ended', e => setTimeout(() => $(".cont_button").prop('disabled', false), 500));
+  $("audio.test").on('ended', e => $(".response").fadeIn());
 
-  console.log(exp.stims);
+  // console.log(exp.stims);
   
   exp.system = {
       Browser : BrowserDetect.browser,

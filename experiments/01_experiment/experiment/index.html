@@ -110,11 +110,14 @@
         <div class="slide" id="testing">
                 <p>Does this sound like it could be a word of the language you were listening to?</p>
 
-                <form id="test_form">
-                        <label>Yes</label><input type="radio" class="isyes" name="isyes" value="1">
-                        <label>No</label><input type="radio" class="isyes" name="isyes" value="0">
-                </form>
-                <button onclick="_s.button()" class="cont_button" disabled>Continue</button>
+                <div class="response" style="display:none">
+                  <form id="test_form">
+                          <label>Yes</label><input type="radio" class="isyes" name="isyes" value="1">
+                          <label>No</label><input type="radio" class="isyes" name="isyes" value="0">
+                  </form>
+                  <button onclick="_s.button()" class="cont_button" disabled>Continue</button>  
+                </div>
+                
                 <div class="err">Please provide a response before continuing.</div>
         </div>
 
