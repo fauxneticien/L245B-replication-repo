@@ -1,10 +1,3 @@
-function getUrlParameter(name) {
-  name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-  var results = regex.exec(location.search);
-  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-};
-
 function make_slides(f) {
   var   slides = {};
 
@@ -171,9 +164,8 @@ function init() {
   exp.trials = [];
   exp.catch_trials = [];
 
-  var list_id = getUrlParameter('l');
-  var num_exposures = getUrlParameter('e');
-  var params_from_url = true;
+  [url_input, list_id, num_exposures] = location.search.match(/l(\d+)e(\d+)/);
+  params_from_url = true;
 
   if (list_id == "" | num_exposures == "") {
     list_id = 1;
