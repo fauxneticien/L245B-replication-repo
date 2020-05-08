@@ -1,3 +1,10 @@
+function getUrlParameter(name) {
+  name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  var results = regex.exec(location.search);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
 function make_slides(f) {
   var   slides = {};
 
@@ -17,7 +24,7 @@ function make_slides(f) {
           $(".err").hide();
           $(".err").html("Please provide a response before continuing.");
           $(".err").fadeIn();
-        } else if (!intro_input_str.match(/^hello/i)) {
+        } else if (!intro_input_str.match(/^hello$/i)) {
           $(".err").hide();
           $(".err").html("This doesn't quite match what we expected. Please try again.");
           $(".err").fadeIn();
@@ -164,7 +171,23 @@ function init() {
   exp.trials = [];
   exp.catch_trials = [];
 
-  exp.stims = replexp_initialize(1,1);
+  var list_id = getUrlParameter('l');
+  var num_exposures = getUrlParameter('e');
+  var params_from_url = true;
+
+  if (list_id == "" | num_exposures == "") {
+    list_id = 1;
+    num_exposures = 1;
+    params_from_url = false;
+  }
+
+  exp.condition = {
+    "list_id" : list_id,
+    "num_exposures": num_exposures,
+    "params_from_url": params_from_url
+  }
+
+  exp.stims = replexp_initialize(num_exposures, list_id);
 
   // flatten into 1-d list, then pre-load audio
   _.map(_.flatten(exp.stims), s => preload_audio(s.stimulus, s.condition));
