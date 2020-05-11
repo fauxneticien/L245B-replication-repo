@@ -161,6 +161,14 @@ function preload_audio(stimulus, condition) {
 /// init ///
 function init() {
 
+  $(document).ready(function () {
+    var ut_id = "7e9ec657c9cbb3153bc8279be1894d55";
+    if (UTWorkerLimitReached(ut_id)) {
+      $(".slide").hide();
+      $("body").html("You have already completed the maximum number of HITs allowed by this requester. Please click 'Return HIT' to avoid any impact on your approval rating.");
+    }
+  });
+
   exp.trials = [];
   exp.catch_trials = [];
 
