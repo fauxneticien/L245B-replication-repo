@@ -1,3 +1,11 @@
+function make_counter() {
+  var counter = 0;
+  return function() {
+    counter += 1;
+    return counter;
+  }
+}
+
 function make_slides(f) {
   var   slides = {};
 
@@ -57,6 +65,7 @@ function make_slides(f) {
     log_responses: function () {
       exp.data_trials.push({
         "stage": "training",
+        "trial_no": exp.counters.train(),
         "stim": this.stim.stimulus,
         "stim_metadata": JSON.stringify(this.stim),
         "response": ""
@@ -102,6 +111,7 @@ function make_slides(f) {
     log_responses: function () {
       exp.data_trials.push({
         "stage": "testing",
+        "trial_no": exp.counters.test(),
         "stim": this.stim.stimulus,
         "stim_metadata": JSON.stringify(this.stim),
         "response": parseInt($("#test_form > input:checked").prop('value'))
@@ -168,6 +178,11 @@ function init() {
       $("body").html("You have already completed the maximum number of HITs allowed by this requester. Please click 'Return HIT' to avoid any impact on your approval rating.");
     }
   });
+
+  exp.counters = { 
+    train: make_counter(),
+    test: make_counter()
+  }
 
   exp.trials = [];
   exp.catch_trials = [];
