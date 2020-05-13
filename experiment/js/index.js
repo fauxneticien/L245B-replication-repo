@@ -187,13 +187,24 @@ function init() {
   exp.trials = [];
   exp.catch_trials = [];
 
-  [url_input, list_id, num_exposures] = location.search.match(/l(\d+)e(\d+)/);
-  params_from_url = true;
+  [url_input, list_id]       = location.search.match(/l(\d+)/) || [];
+  [url_input, num_exposures] = location.search.match(/e(\d+)/) || [];
 
-  if (list_id == "" | num_exposures == "") {
-    list_id = 1;
-    num_exposures = 1;
-    params_from_url = false;
+  valid_lists = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // Leave list 1 out for now (already collected data from 20 participants using manual parameter assignment)
+  valid_exps  = [1, 4];
+
+  if (!valid_lists.includes(parseInt(list_id)) & !valid_exps.includes(parseInt(num_exposures))) {
+    list_id = _.sample(valid_lists);        // randomly assign list if list_id is invalid
+    num_exposures = _.sample(valid_exps);   // randomly assign num_exposures if num_exposures is invalid
+    params_from_url = "neither";
+  } else if (!valid_lists.includes(parseInt(list_id))) {
+    list_id = _.sample(valid_lists);
+    params_from_url = "exp_only";
+  } else if (!valid_exps.includes(parseInt(num_exposures))) {
+    num_exposures = _.sample(valid_exps);  
+    params_from_url = "list_only";
+  } else {
+    params_from_url = "both";
   }
 
   exp.condition = {
