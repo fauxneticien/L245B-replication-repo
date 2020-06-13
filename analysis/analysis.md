@@ -1,0 +1,185 @@
+
+# Setup
+
+``` r
+# Install pacman package if not already installed
+if(!"pacman" %in% installed.packages()) { install.packages("pacman") }
+
+# Use pacman to load packages (will install package(s) if not already installed)
+pacman::p_load(
+  here,
+  readr,
+  purrr,
+  dplyr,
+  tidyr,
+  jsonlite,
+  ggplot2,
+  brms
+)
+```
+
+# Data
+
+``` r
+exp_df <- left_join(
+    read_csv(here("analysis/data/exp-trials.csv"), col_types = "iiidccc"),
+    read_csv(here("analysis/data/exp-conditions.csv"), col_types = "iici"),
+    by = "workerid"
+  ) %>%
+  mutate(stim_metadata = map(stim_metadata, ~ fromJSON(.) %>% data.frame)) %>%
+  unnest(cols = c(stim_metadata)) %>%
+  mutate(
+    stim.att  = ifelse(condition == "attested", "att", "unatt"),
+    stim.conf = ifelse(condition == "illegal", "nonconf", "conf")
+  ) %>% 
+  select(
+    # subject metadata
+    exp.subject     = workerid,               # anonymised mturk worker id
+    exp.stim_list   = list_id,                # id of stimulus set subject was assigned to (1 to 12)
+    exp.num_expos   = num_exposures,          # number of 5-word sets drawn from stimulus list (1 or 4)
+    exp.total_time  = Answer.time_in_minutes, # total time taken by subject to complete experiment
+    # trial metadata
+    trial.stage     = stage,                  # stage: training or testing
+    trial.num       = trial_no,               # trial number within stage
+    trial.test_cond = condition,              # condition within testing stage
+    trial.test_resp = response,               # response to audio stimulus in testing stage
+    trial.stim      = stimulus,               # stimulus item played (training or testing)
+    # stimulus metadata
+    stim.c1         = c1,                     # first consonant of stimulus item, e.g. z in zima
+    stim.v1         = v1,                     # first vowel of stimulus item, e.g. i in zima
+    stim.c2         = n,                      # second consonant of stimulus item, e.g. m in zima
+    stim.v2         = v2,                     # second vowel of stimulus item, e.g. a in zima
+    stim.voicing    = voicing,                # whether c1 is voiced or voiceless
+    stim.att,                                 # has test stimulus been seen by subject? (attested/unattested)
+    stim.conf                                 # does test stimulus conform to exposed language? (conforming/non-conforming)
+  )
+
+exp_test_df <- exp_df %>% 
+    filter(
+      !exp.subject %in% 47,94,155,164,215,    # subject(s) whose native language was not English
+      trial.stage == "testing"                # keep only testing trials (not training trials)
+    ) 
+```
+
+# Graphs
+
+``` r
+exp_test_df %>%
+  ggplot(aes(
+    x        = factor(exp.num_expos),
+    y        = trial.test_resp,
+    color    = stim.conf,
+    group    = trial.test_cond,
+    linetype = stim.att,
+    shape    = stim.att
+  )) +
+  # Copied from L&G's original code:
+  theme_bw(base_size=12) +
+  stat_summary(fun.y='mean', geom='point', size=3.5, position=position_dodge(width=0.2)) +
+  stat_summary(fun.y='mean', geom='line', size=0.8, position=position_dodge(width=0.2)) + 
+  stat_summary(fun.data='mean_cl_boot', geom='errorbar', width=0, size=0.8, position= position_dodge(width=0.2), linetype='solid') + 
+  scale_shape_manual('', breaks=c('att', 'unatt'), labels=c('Attested', 'Unattested'), values=c(16, 15)) +
+  guides(color=guide_legend(order=1), shape=guide_legend(order=2), linetype=FALSE) +
+  scale_x_discrete('Exposure sets') +
+  scale_color_brewer('', breaks=c('conf', 'nonconf'), palette='Set1', labels=c('Conforming', 'Nonconforming')) +
+  scale_linetype_discrete('', breaks=c('att', 'unatt'), labels=c('Attested', 'Unattested')) +
+  scale_y_continuous('Endorsement rate', limits=c(0, 1), breaks=c(0.4, 0.6, 0.8, 1), labels=c("40%", "60%", "80%", "100%")) +
+  coord_cartesian(ylim=c(0.3, 1)) +
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), axis.title.x=element_text(vjust=0))
+```
+
+![](analysis_files/figure-gfm/LnG-figure-1_endorsement-rates-1.png)<!-- -->
+
+# Model
+
+``` r
+# Hm setting eval=FALSE. brm doesn't seem to like to run in RMarkdown for some reason
+
+exp_model_df <- exp_test_df %>%
+  mutate(
+    exp.subject      = as.factor(exp.subject),
+    exp.num_expos    = as.factor(exp.num_expos),
+    stim.model_label = paste(stim.conf, stim.att, sep = "-") %>% as.factor()
+  )
+
+mod.full <- brm(
+  formula = trial.test_resp ~ exp.num_expos * stim.model_label
+    # by-subject int+slope for onset type (cannot add by-sub for num.expos as it is a between-subject variable)
+    + (1 + stim.model_label || exp.subject)
+    # by-onset int+slope for onset type and for number of exposures
+    + (1 + stim.model_label + exp.num_expos || stim.c1),
+  iter = 4000,
+  # set seed for reproducibility
+  seed = 2020,
+  # use multiple cores if available
+  cores = parallel::detectCores(),
+  data    = exp_model_df,
+  family  = "bernoulli"
+)
+
+summary(mod.full)
+```
+
+    Show in New WindowClear OutputExpand/Collapse Output
+        
+    Registered S3 method overwritten by 'data.table': method from print.data.table
+    
+    Show in New WindowClear OutputExpand/Collapse Output
+     Family: bernoulli 
+      Links: mu = logit 
+    Formula: trial.test_resp ~ exp.num_expos * stim.model_label + (1 + stim.model_label || exp.subject) + (1 + stim.model_label + exp.num_expos || stim.c1) 
+       Data: exp_model_df (Number of observations: 1302) 
+    Samples: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+             total post-warmup samples = 8000
+    
+    Group-Level Effects: 
+    ~exp.subject (Number of levels: 217) 
+                                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    sd(Intercept)                         0.88      0.15     0.59     1.17 1.00     1992     2819
+    sd(stim.model_labelconfMunatt)        1.16      0.39     0.30     1.90 1.00      982      893
+    sd(stim.model_labelnonconfMunatt)     0.94      0.38     0.11     1.64 1.01      724      812
+    
+    ~stim.c1 (Number of levels: 12) 
+                                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    sd(Intercept)                         0.24      0.15     0.02     0.59 1.00     2323     3561
+    sd(stim.model_labelconfMunatt)        0.25      0.20     0.01     0.74 1.00     3566     4780
+    sd(stim.model_labelnonconfMunatt)     0.19      0.15     0.01     0.57 1.00     3726     4653
+    sd(exp.num_expos4)                    0.20      0.16     0.01     0.58 1.00     2968     3821
+    
+    Population-Level Effects: 
+                                                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    Intercept                                        1.39      0.22     0.97     1.82 1.00     5510     5740
+    exp.num_expos4                                   0.33      0.30    -0.24     0.93 1.00     5210     5990
+    stim.model_labelconfMunatt                      -0.44      0.30    -1.02     0.20 1.00     4408     4939
+    stim.model_labelnonconfMunatt                   -0.95      0.28    -1.47    -0.40 1.00     5233     5712
+    exp.num_expos4:stim.model_labelconfMunatt       -0.05      0.40    -0.85     0.73 1.00     5263     6306
+    exp.num_expos4:stim.model_labelnonconfMunatt    -0.75      0.38    -1.50    -0.02 1.00     5218     5947
+    
+    Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+    and Tail_ESS are effective sample size measures, and Rhat is the potential
+    scale reduction factor on split chains (at convergence, Rhat = 1).
+
+## Hypothesis testing
+
+``` r
+c(
+  # H1: non-conforming unattested is endorsed less than conforming attested in 1-exposure condition
+  "stim.model_labelnonconfMunatt < stim.model_labelconfMunatt",
+  # H2: non-conforming unattested is endorsed less than conforming attested in 4-exposure condition
+  "exp.num_expos4:stim.model_labelnonconfMunatt < exp.num_expos4",
+  # H3: non-conforming unattested is endorsed less than conforming unattested in 4-exposure condition
+  "exp.num_expos4:stim.model_labelnonconfMunatt < exp.num_expos4:stim.model_labelconfMunatt"
+) %>%
+hypothesis(hypothesis = ., x = mod.full)
+```
+
+    Hypothesis Tests for class b:
+                    Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob Star
+    1 (stim.model_label... < 0    -0.50      0.32    -1.05     0.00      18.56      0.95     
+    2 (exp.num_expos4:s... < 0    -1.09      0.61    -2.11    -0.09      27.88      0.97    *
+    3 (exp.num_expos4:s... < 0    -0.70      0.41    -1.37    -0.04      23.10      0.96    *
+    ---
+    'CI': 90%-CI for one-sided and 95%-CI for two-sided hypotheses.
+    '*': For one-sided hypotheses, the posterior probability exceeds 95%;
+    for two-sided hypotheses, the value tested against lies outside the 95%-CI.
+    Posterior probabilities of point hypotheses assume equal prior probabilities.
